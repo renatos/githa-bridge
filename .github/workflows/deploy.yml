@@ -39,9 +39,11 @@ jobs:
         username: ubuntu
         key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
         script: |
-          # Carrega o NVM para que o npm e pm2 fiquem disponíveis
+          # Carrega o NVM e seleciona a versão
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          nvm use 20 || nvm use default
+          export PATH=$PATH:$(npm config get prefix)/bin
           
           cd /opt/githa/githa-bridge
           
