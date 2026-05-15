@@ -39,20 +39,21 @@ jobs:
         username: ubuntu
         key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
         script: |
-          # Carrega o NVM e seleciona a versão
-          export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          nvm use 20 || nvm use default
-          export PATH=$PATH:$(npm config get prefix)/bin
+          # Garante que a pasta existe e pertence ao usuário openclaw
+          sudo mkdir -p /opt/githa/githa-bridge
+          sudo chown -R openclaw:openclaw /opt/githa/githa-bridge
           
-          cd /opt/githa/githa-bridge
-          
-          # Gera o arquivo .env automaticamente
-          cat <<EOF > .env
-          PORT=3000
-          BRIDGE_API_KEY=${{ secrets.GITHA_BRIDGE_API_KEY }}
-          EOF
-          
-          npm install --production
-          # Reinicia com PM2
-          pm2 restart githa-bridge --update-env || pm2 start dist/server.js --name githa-bridge
+          # Executa o restante como usuário openclaw
+          sudo -u openclaw bash -c '
+            export NVM_DIR="/home/openclaw/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+            
+            cd /opt/githa/githa-bridge
+            
+            # Gera o arquivo .env de forma limpa
+            printf "PORT=3000\nBRIDGE_API_KEY=%s\n" "${{ secrets.GITHA_BRIDGE_API_KEY }}" > .env
+            
+            npm install --production
+            # Reinicia no PM2 do usuário openclaw
+            pm2 restart githa-bridge --update-env || pm2 start dist/server.js --name githa-bridge
+          '

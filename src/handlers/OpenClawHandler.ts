@@ -20,7 +20,8 @@ export class OpenClawHandler {
         '--message', message
       ];
 
-      const child = spawn('oc', args);
+      // Direct path to the binary, no sudo needed as we will run the service as 'openclaw' user
+      const child = spawn('/home/openclaw/.nvm/versions/node/v24.15.0/bin/openclaw', args);
 
       let stdout = '';
       let stderr = '';

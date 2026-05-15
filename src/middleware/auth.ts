@@ -5,6 +5,7 @@ export const authMiddleware = async (request: FastifyRequest, reply: FastifyRepl
   const apiKey = request.headers['x-api-key'];
 
   if (!apiKey || apiKey !== env.BRIDGE_API_KEY) {
-    reply.status(401).send({ error: 'Unauthorized: Invalid or missing API Key' });
+    console.warn(`[Auth] Unauthorized attempt. Received: "${apiKey}", Expected: "${env.BRIDGE_API_KEY}"`);
+    return reply.status(401).send({ error: 'Unauthorized: Invalid or missing API Key' });
   }
 };
