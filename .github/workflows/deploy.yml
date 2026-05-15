@@ -22,24 +22,24 @@ jobs:
     - name: Build
       run: npm run build
 
-    - name: Deploy via SSH
-      uses: appleboy/ssh-action@master
+    - name: Copy files to Host
+      uses: appleboy/scp-action@v0.1.7
       with:
-        host: ${{ secrets.HOST_IP }}
-        username: ${{ secrets.HOST_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        host: ${{ secrets.VM_HOST }}
+        username: ubuntu
+        key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+        source: "dist/*,package.json,package-lock.json"
+        target: "/opt/githa/githa-bridge"
+        rm: true
+
+    - name: Restart Service via SSH
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.VM_HOST }}
+        username: ubuntu
+        key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
         script: |
-          mkdir -p ~/services/githa-bridge
-          cd ~/services/githa-bridge
-          # Note: In a real scenario, you'd transfer files first. 
-          # This script assumes the code is already pulled or uses rsync.
-          # For simplicity in this template, we assume git is available on host.
-          if [ ! -d ".git" ]; then
-            git clone https://github.com/renatos/githa-bridge.git .
-          else
-            git pull origin main
-          fi
+          cd /opt/githa/githa-bridge
           npm install --production
-          npm run build
-          # Restart using PM2
-          pm2 restart githa-bridge || pm2 start dist/server.ts --name githa-bridge
+          # Reinicia com PM2
+          pm2 restart githa-bridge || pm2 start dist/server.js --name githa-bridge
