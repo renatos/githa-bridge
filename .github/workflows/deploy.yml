@@ -55,4 +55,4 @@ jobs:
           
           npm install --production
           # Reinicia com PM2
-          pm2 restart githa-bridge || pm2 start dist/server.js --name githa-bridge
+          pm2 restart githa-bridge --update-env || pm2 start dist/server.js --name githa-bridge
