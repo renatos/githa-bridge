@@ -1,0 +1,30 @@
+{
+  "name": "githa-bridge",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "fastify": "^5.8.5",
+    "fastify-plugin": "^5.1.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.8.0",
+    "@types/ws": "^8.18.1",
+    "nodemon": "^3.1.14",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3",
+    "ws": "^8.20.1"
+  }
+}

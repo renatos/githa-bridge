@@ -1,0 +1,45 @@
+name: Deploy to Host
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Build
+      run: npm run build
+
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST_IP }}
+        username: ${{ secrets.HOST_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          mkdir -p ~/services/githa-bridge
+          cd ~/services/githa-bridge
+          # Note: In a real scenario, you'd transfer files first. 
+          # This script assumes the code is already pulled or uses rsync.
+          # For simplicity in this template, we assume git is available on host.
+          if [ ! -d ".git" ]; then
+            git clone https://github.com/renatos/githa-bridge.git .
+          else
+            git pull origin main
+          fi
+          npm install --production
+          npm run build
+          # Restart using PM2
+          pm2 restart githa-bridge || pm2 start dist/server.ts --name githa-bridge
