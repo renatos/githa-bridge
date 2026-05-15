@@ -1,5 +1,4 @@
-import WebSocket from 'ws';
-import { env } from '../config/index.js';
+import { spawn } from 'child_process';
 
 export class OpenClawHandler {
   static async handle(action: string, params: any) {
@@ -11,57 +10,39 @@ export class OpenClawHandler {
 
   private static async sendMessage(to: string, message: string): Promise<any> {
     return new Promise((resolve, reject) => {
-      const ws = new WebSocket(env.OPENCLAW_WS_URL, {
-        headers: {
-          'Authorization': `Bearer ${env.OPENCLAW_TOKEN}`
-        }
+      console.log(`Executing OpenClaw CLI for target: ${to}`);
+      
+      const args = [
+        'message',
+        'send',
+        '--channel', 'whatsapp',
+        '--target', to,
+        '--message', message
+      ];
+
+      const child = spawn('oc', args);
+
+      let stdout = '';
+      let stderr = '';
+
+      child.stdout.on('data', (data) => {
+        stdout += data.toString();
       });
 
-      const timeout = setTimeout(() => {
-        ws.terminate();
-        reject(new Error('OpenClaw timeout after 15 seconds'));
-      }, 15000);
-
-      ws.on('open', () => {
-        const payload = {
-          type: 'call',
-          method: 'node.invoke',
-          params: {
-            method: 'message.send',
-            params: {
-              channel: 'whatsapp',
-              target: to,
-              message: message
-            }
-          },
-          id: `bridge-${Date.now()}`
-        };
-
-        ws.send(JSON.stringify(payload));
+      child.stderr.on('data', (data) => {
+        stderr += data.toString();
       });
 
-      ws.on('message', (data) => {
-        clearTimeout(timeout);
-        const response = JSON.parse(data.toString());
-        ws.close();
-        
-        if (response.error) {
-          reject(new Error(response.error.message || 'Unknown OpenClaw error'));
+      child.on('close', (code) => {
+        if (code === 0) {
+          resolve({ status: 'success', output: stdout.trim() });
         } else {
-          resolve(response.result);
+          reject(new Error(`OpenClaw CLI failed with code ${code}. Error: ${stderr.trim()}`));
         }
       });
 
-      ws.on('error', (err) => {
-        clearTimeout(timeout);
-        reject(new Error(`WebSocket error: ${err.message}`));
-      });
-
-      ws.on('close', (code) => {
-        clearTimeout(timeout);
-        if (code !== 1000 && code !== 1005) {
-          reject(new Error(`WebSocket closed unexpectedly with code ${code}`));
-        }
+      child.on('error', (err) => {
+        reject(new Error(`Failed to start OpenClaw process: ${err.message}`));
       });
     });
   }
