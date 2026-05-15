@@ -39,6 +39,10 @@ jobs:
         username: ubuntu
         key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
         script: |
+          # Carrega o NVM para que o npm e pm2 fiquem disponíveis
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          
           cd /opt/githa/githa-bridge
           
           # Gera o arquivo .env automaticamente
