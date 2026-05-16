@@ -30,22 +30,24 @@ export class OpenClawHandler {
       console.log(`[Bridge] Brazilian number detected. Will also attempt send to: ${withoutNine}`);
     }
 
-    // 3. Execução dos comandos (Sequencial para não sobrecarregar o CLI)
-    const results = [];
+    // 3. Execução dos comandos
+    const errors = [];
     for (const target of targets) {
       try {
         const result = await this.executeOc(target, message);
-        results.push(result);
+        // Se um envio teve sucesso, retornamos imediatamente
+        return {
+          status: 'completed',
+          results: [result]
+        };
       } catch (err: any) {
         console.error(`[Bridge] Error sending to ${target}: ${err.message}`);
-        results.push({ target, status: 'error', error: err.message });
+        errors.push({ target, error: err.message });
       }
     }
 
-    return {
-      status: 'completed',
-      results
-    };
+    // Se chegou aqui, todas as tentativas falharam
+    throw new Error(`Failed to send message to all targets: ${errors.map(e => `[${e.target}]: ${e.error}`).join(' | ')}`);
   }
 
   private static executeOc(target: string, message: string): Promise<any> {
