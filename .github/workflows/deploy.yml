@@ -22,6 +22,17 @@ jobs:
     - name: Build
       run: npm run build
 
+    - name: Prepare folder permissions
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.VM_HOST }}
+        username: ubuntu
+        key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+        script: |
+          if [ -d "/opt/githa/githa-bridge" ]; then
+            sudo chown -R ubuntu:ubuntu /opt/githa/githa-bridge
+          fi
+
     - name: Copy files to Host
       uses: appleboy/scp-action@v0.1.7
       with:
